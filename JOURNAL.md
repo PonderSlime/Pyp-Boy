@@ -13,3 +13,18 @@ I figured out how to use some tools I haven't used before, including the wrap to
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/68417295fe4105d7c07525d4ab1f006cc605584a_2025-05-23-143347_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/68417295fe4105d7c07525d4ab1f006cc605584a_2025-05-23-143347_hyprshot.png)
 
 **Total time spent: 3h**
+
+
+# May 23rd-24th: Added some knobs!
+I started to model where each of the knobs will go on the Pip-Boy. Also, I fixed some of the form factor of the overall arm section. I didn't really do a ton though
+
+**Total time spent: 2h**
+
+
+# May 26th: Continuing knobby things
+I added a knob for secondary menu selection and radio tuning, as well as a select button and a radio tuner indicator spot
+
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/095caf989e5443e84d2df1f08b7d26e1f4534526_2025-05-26-155143_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/095caf989e5443e84d2df1f08b7d26e1f4534526_2025-05-26-155143_hyprshot.png)
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/43221945aa9acdee51f7f8d1b4c205f1dce9f17a_2025-05-26-155139_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/43221945aa9acdee51f7f8d1b4c205f1dce9f17a_2025-05-26-155139_hyprshot.png)
+
+**Total time spent: 1h**
