@@ -27,4 +27,19 @@ I added a knob for secondary menu selection and radio tuning, as well as a selec
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/095caf989e5443e84d2df1f08b7d26e1f4534526_2025-05-26-155143_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/095caf989e5443e84d2df1f08b7d26e1f4534526_2025-05-26-155143_hyprshot.png)
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/43221945aa9acdee51f7f8d1b4c205f1dce9f17a_2025-05-26-155139_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/43221945aa9acdee51f7f8d1b4c205f1dce9f17a_2025-05-26-155139_hyprshot.png)
 
+**Total time spent: 2h**
+
+
+# May 27th: Finished knobby stuff
+I added both of the navigation wheels, as well as split apart the tube and electronics housing sections.
+
+**Total time spent: 1h**
+
+
+# May 28th: Started Latch Mechanism, Arm Erginomics
+I started work on the latch mecanism for the Pip-Boy, and also turned the cylendrical interior of the model into more of a cone shape.
+
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/961e35072b154a81121447986b809b8d1c70d7fe_2025-05-28-200431_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/961e35072b154a81121447986b809b8d1c70d7fe_2025-05-28-200431_hyprshot.png)
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/486bc97e55d4ada4199406a0d993f4b2aa87ab2b_2025-05-28-200417_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/486bc97e55d4ada4199406a0d993f4b2aa87ab2b_2025-05-28-200417_hyprshot.png)
+
 **Total time spent: 1h**
