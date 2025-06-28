@@ -43,3 +43,10 @@ I started work on the latch mecanism for the Pip-Boy, and also turned the cylend
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/486bc97e55d4ada4199406a0d993f4b2aa87ab2b_2025-05-28-200417_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/486bc97e55d4ada4199406a0d993f4b2aa87ab2b_2025-05-28-200417_hyprshot.png)
 
 **Total time spent: 1h**
+
+# June 27th: Back From Break, Finished Latch Mechanism & Hinges, Added Encoder and Heatset Mounting Holes
+I finally got the motivation to continue working on my project. I finished uo the latch mechanism and the upper hinge with some 3mm rods. Also, I added spots for the encoders on all of the knobs. In addition, I added a handful of heatset holes that are hidden from the frontside to secure it together.
+
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/b2e52c3f80351a633573ffb4218ada6e2fc150f8_2025-06-27-203610_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/b2e52c3f80351a633573ffb4218ada6e2fc150f8_2025-06-27-203610_hyprshot.png)
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/75f5c39bce37d8ea9c7e3828193f0c434625de04_2025-06-27-203554_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/75f5c39bce37d8ea9c7e3828193f0c434625de04_2025-06-27-203554_hyprshot.png)
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/76d50b34b40de67969643d15641455e24a616dab_2025-06-27-203549_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/76d50b34b40de67969643d15641455e24a616dab_2025-06-27-203549_hyprshot.png)
