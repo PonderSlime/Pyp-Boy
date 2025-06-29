@@ -52,3 +52,9 @@ I finally got the motivation to continue working on my project. I finished uo th
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/76d50b34b40de67969643d15641455e24a616dab_2025-06-27-203549_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/76d50b34b40de67969643d15641455e24a616dab_2025-06-27-203549_hyprshot.png)
 
 **Total time spent: 4h**
+
+## June 28th: Added Texture to the Knobs, did Research on RTL-SDR Modules
+I added some nice details to each of the knobs, and gave them cool grips. Also, I fixed the latch tolerances so they actually work, and did some research on how I could get FM radio recieving on my device.
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/2ecbe588889400ed564f8305abd84febf3086739_2025-06-28-181544_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/2ecbe588889400ed564f8305abd84febf3086739_2025-06-28-181544_hyprshot.png)
+
+**Total time spent: 3h**
