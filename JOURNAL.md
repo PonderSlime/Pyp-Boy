@@ -4,7 +4,7 @@ author: "Micah Edwards"
 description: "Fully-Functional recreation of the Pip-Boy 3000 Mark IV from Fallout 4"
 created_at: "2024-05-22"
 ---
-## Total time spent: 18h
+## Total time spent: 20h
 
 # May 22nd-23rd: Started on Modeling the housing!
 
@@ -64,5 +64,12 @@ I added some nice details to each of the knobs, and gave them cool grips. Also, 
 Today I decided to start working on a bill of materials for my project. I also took some time to figure out where/how I should get the case manufactured. After trying several CNC companies' auto quote, I determined that it would be way too expensive ($30.00 USD for just one simple latch part!). Instead, I will 3D print the parts and electroplate it at home. The only change I made to the CAD model today was adding a latch pin slot so that the latch can actually lock properly.
 
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/1c74663c2242f76f8d4dc3c0941211fc3dfbe883_2025-06-29-171235_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/1c74663c2242f76f8d4dc3c0941211fc3dfbe883_2025-06-29-171235_hyprshot.png)
+
+**Time spent: 2h**
+
+# July 1-2nd: Started work on pyp-tui
+I decided that I wanted to code a TUI (terminal user interface) using rust, to use as the main interface for my device. So far I have a basic inventory database, menus, and submenus. It still need some controls for the RTL-SDR module though.
+
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/79f344e348c653453cdb9142933b67766726bf15_2025-07-02-152713_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/79f344e348c653453cdb9142933b67766726bf15_2025-07-02-152713_hyprshot.png)
 
 **Time spent: 2h**
