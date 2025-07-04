@@ -14,3 +14,4 @@ thiserror = "1.0"
 max3010x = "0.2.0"
 linux-embedded-hal = "0.4.0"
 osm-geo-mapper = "0.8.0"
+spatialtime = { version = "0.2", features = ["osm"] }

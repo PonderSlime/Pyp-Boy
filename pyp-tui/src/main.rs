@@ -15,21 +15,18 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
+    text::{Span, Spans, Text},
     widgets::{
         Block, BorderType, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, Tabs,
     },
     Terminal,
 };
 
-use osm_geo_mapper::{
-    geo_types, interface, features
-};
 
 extern crate linux_embedded_hal as hal;
 extern crate max3010x;
 use max3010x::{Max3010x, Led, SampleAveraging};
-extern crate osm_geo_mapper;
+
 const DB_PATH: &str = "./data/db.json";
 
 #[derive(Error, Debug)]
@@ -125,17 +122,8 @@ impl From<DataSubMenu> for usize {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-	let mapper_result = interface::OSMGeoMapper::from_address("ottawa canada".to_string(), Some(20));
-	let mut geo_features = vec![];
 
-	if let Ok(mapper) = mapper_result {
-		let data = mapper.data_structure.read().unwrap();
-		for (_coord, features) in data.iter() {
-			for feature in features {
-				geo_features.push(format!("{:?}", feature));
-			}
-		}
-	}
+	let coords: [f64; 2] = [-77.0365, 38.8977];
 
 	let stat_submenu_titles = vec!["GENERAL", "STATUS", "SETTINGS"];
 	let inv_submenu_titles = vec!["ITEMS", "AID", "WEAPONS"];
@@ -352,7 +340,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 				// fallback layout with no submenu
 				rect.render_widget(tabs, chunks[0]);
 				match active_menu_item {
-					MenuItem::Map => rect.render_widget(render_map(&geo_features), chunks[1]),
+					MenuItem::Map => rect.render_widget(render_map(coords), chunks[1]),
 					MenuItem::Radio => rect.render_widget(render_stat(), chunks[1]),
 					_ => {}
 				}
@@ -601,13 +589,20 @@ fn render_data<'a>() -> Paragraph<'a> {
     );
     home
 }
-fn render_map<'a>(geo_features: &'a Vec<String>) -> Paragraph<'a> {
-    let display_lines: Vec<Spans> = geo_features
-        .iter()
-        .map(|line| Spans::from(Span::raw(line.clone())))
-        .collect();
+fn render_map<'a>(coordinates: [f64; 2]) -> Paragraph<'a> {
+    let spatial_time = spatialtime::osm::lookup(coordinates[0], coordinates[1]).unwrap();
 
-    Paragraph::new(display_lines)
+	let mut spans = vec![];
+
+	spans.push(Span::styled(
+        format!("Time Zone: {}", spatial_time.tzid), // Extract and format the name
+        Style::default().add_modifier(Modifier::BOLD), // Style the location name
+    ));
+
+	let spans = Spans::from(spans);
+	let spatial_time_text = Text::from(spans);
+
+    Paragraph::new(spatial_time_text)
         .alignment(Alignment::Left)
         .block(
             Block::default()
