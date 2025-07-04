@@ -77,6 +77,6 @@ I decided that I wanted to code a TUI (terminal user interface) using rust, to u
 # July 3-4 Working on Organization, Adding Map Data
 I decided to start organizing my script, by breaking it up into seperate files. Also, I was able to finally get the map data stuff working. Origonally, I was going to go for a ascii art map centered on the coordinates from the gps module, but I couldn't get that working. It will just be data instead. And the best part? It works offline, with a small library size! Also, I implemented an escape button that erases any evidence of the tui being open! In addition, I fixed the inventory tabs so that they change content based on category.
 
-![](https://hc-cdn.hel1.your-objectstorage.com/s/v3/9330ec822f5a1ef044ab38b722746c9dc4dd19e5_2025-07-04_16-11-19.mp4)
+https://github.com/user-attachments/assets/03545f6d-08a7-4fc2-ad75-7554e2540552
 
 **Time spent: 5h**
