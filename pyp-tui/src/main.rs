@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode},
 };
 use rand::{distributions::Alphanumeric, prelude::*};
-use serde::{Deserialize, Serialize};
+
 use std::fs;
 use std::io;
 use std::sync::mpsc;
@@ -15,19 +15,26 @@ use tui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans, Text},
+    text::{Span, Spans},
     widgets::{
-        Block, BorderType, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, Tabs,
+        Block, BorderType, Borders, ListState, Paragraph, Tabs,
     },
     Terminal,
 };
 
-
 extern crate linux_embedded_hal as hal;
 extern crate max3010x;
+extern crate ratatui;
+
 use max3010x::{Max3010x, Led, SampleAveraging};
 
 const DB_PATH: &str = "./data/db.json";
+
+mod render_tabs;
+mod menus;
+
+use render_tabs::{render_map, render_stat, render_data, render_inv, read_db, get_map_data, Item,};
+use menus::{MenuItem, StatSubMenu, InvSubMenu, DataSubMenu};
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -42,95 +49,27 @@ enum Event<I> {
     Tick,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-struct Item {
-    id: usize,
-    name: String,
-    category: String,
-    created_at: DateTime<Utc>,
-}
-
-#[derive(Copy, Clone, Debug)]
-enum MenuItem {
-	Stat,
-    Inv,
-    Data,
-	Map,
-	Radio,
-}
-
-impl From<MenuItem> for usize {
-    fn from(input: MenuItem) -> usize {
-        match input {
-            MenuItem::Stat => 0,
-            MenuItem::Inv => 1,
-			MenuItem::Data => 2,
-            MenuItem::Map => 3,
-			MenuItem::Radio => 4,
-        }
-    }
-}
-#[derive(Copy, Clone, Debug)]
-enum StatSubMenu {
-    General,
-    Status,
-    Settings,
-}
-
-impl From<StatSubMenu> for usize {
-    fn from(input: StatSubMenu) -> usize {
-        match input {
-            StatSubMenu::General => 0,
-            StatSubMenu::Status => 1,
-            StatSubMenu::Settings => 2,
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-enum InvSubMenu {
-    Items,
-    Aid,
-    Weapons,
-}
-
-impl From<InvSubMenu> for usize {
-    fn from(input: InvSubMenu) -> usize {
-        match input {
-            InvSubMenu::Items => 0,
-            InvSubMenu::Aid => 1,
-            InvSubMenu::Weapons => 2,
-        }
-    }
-}
-
-#[derive(Copy, Clone, Debug)]
-enum DataSubMenu {
-    Quests,
-    Logs,
-    Notes,
-}
-
-impl From<DataSubMenu> for usize {
-    fn from(input: DataSubMenu) -> usize {
-        match input {
-            DataSubMenu::Quests => 0,
-            DataSubMenu::Logs => 1,
-            DataSubMenu::Notes => 2,
-        }
-    }
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+	
 
-	let coords: [f64; 2] = [-77.0365, 38.8977];
+	let coords: [f64; 2] = [44.817028, -89.736273];
+
+	let mut map_data: Option<String> = None;
+	let mut start_time = Instant::now();
+    let one_minute = Duration::from_secs(60);
+
+	if map_data.is_none() || start_time.elapsed() >= one_minute {
+		start_time = Instant::now();
+        map_data = Some(get_map_data(coords));
+		println!("getting map data: {:?}", map_data)
+    }
 
 	let stat_submenu_titles = vec!["GENERAL", "STATUS", "SETTINGS"];
-	let inv_submenu_titles = vec!["ITEMS", "AID", "WEAPONS"];
-	let data_submenu_titles = vec!["QUESTS", "LOGS", "NOTES"];
+	let inv_submenu_titles = vec!["WEAPONS", "APPAREL", "AID", "MISC", "JUNK", "MODS", "AMMO"];
+	let data_submenu_titles = vec!["QUESTS", "WORKSHOPS", "STATS"];
 
 	let mut active_stat_submenu = StatSubMenu::General;
-	let mut active_inv_submenu = InvSubMenu::Items;
+	let mut active_inv_submenu = InvSubMenu::Weapons;
 	let mut active_data_submenu = DataSubMenu::Quests;
 
 
@@ -314,22 +253,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						StatSubMenu::Settings => rect.render_widget(render_stat_settings(), adjusted_chunks[2]),
 					},
 					MenuItem::Inv => match active_inv_submenu {
-						InvSubMenu::Items => {
-							let inv_chunks = Layout::default()
-								.direction(Direction::Horizontal)
-								.constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
-								.split(adjusted_chunks[2]);
-							let (left, right) = render_inv(&inv_list_state);
-							rect.render_stateful_widget(left, inv_chunks[0], &mut inv_list_state);
-							rect.render_widget(right, inv_chunks[1]);
-						}
-						InvSubMenu::Aid => rect.render_widget(render_inv_aid(), adjusted_chunks[2]),
-						InvSubMenu::Weapons => rect.render_widget(render_inv_weapons(), adjusted_chunks[2]),
+						InvSubMenu::Weapons => draw_filtered_inventory(rect, adjusted_chunks[2], &mut inv_list_state, "Weapons"),
+						InvSubMenu::Apparel => draw_filtered_inventory(rect, adjusted_chunks[2], &mut inv_list_state, "Apparel"),
+						InvSubMenu::Aid => draw_filtered_inventory(rect, adjusted_chunks[2], &mut inv_list_state, "Aid"),
+						InvSubMenu::Misc => draw_filtered_inventory(rect, adjusted_chunks[2], &mut inv_list_state, "Misc"),
+						InvSubMenu::Junk => draw_filtered_inventory(rect, adjusted_chunks[2], &mut inv_list_state, "Junk"),
+						InvSubMenu::Mods => draw_filtered_inventory(rect, adjusted_chunks[2], &mut inv_list_state, "Mods"),
+						InvSubMenu::Ammo => draw_filtered_inventory(rect, adjusted_chunks[2], &mut inv_list_state, "Ammo"),
 					},
 					MenuItem::Data => match active_data_submenu {
 						DataSubMenu::Quests => rect.render_widget(render_data_quests(), adjusted_chunks[2]),
-						DataSubMenu::Logs => rect.render_widget(render_data_logs(), adjusted_chunks[2]),
-						DataSubMenu::Notes => rect.render_widget(render_data_notes(), adjusted_chunks[2]),
+						DataSubMenu::Workshops => rect.render_widget(render_data_workshops(), adjusted_chunks[2]),
+						DataSubMenu::Stats => rect.render_widget(render_data_stats(), adjusted_chunks[2]),
 					},
 					_ => {}
 				}
@@ -340,40 +275,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 				// fallback layout with no submenu
 				rect.render_widget(tabs, chunks[0]);
 				match active_menu_item {
-					MenuItem::Map => rect.render_widget(render_map(coords), chunks[1]),
+					MenuItem::Map => rect.render_widget(render_map(map_data.clone()), chunks[1]),
 					MenuItem::Radio => rect.render_widget(render_stat(), chunks[1]),
 					_ => {}
 				}
 				rect.render_widget(copyright, chunks[2]);
 			}
-
-            //rect.render_widget(tabs, chunks[0]);
-			
-            /* match active_menu_item {
-                MenuItem::Stat => rect.render_widget(render_stat(), chunks[1]),
-                MenuItem::Inv => {
-                    let inv_chunks = Layout::default()
-                        .direction(Direction::Horizontal)
-                        .constraints(
-                            [Constraint::Percentage(20), Constraint::Percentage(80)].as_ref(),
-                        )
-                        .split(chunks[1]);
-                    let (left, right) = render_inv(&inv_list_state);
-                    rect.render_stateful_widget(left, inv_chunks[0], &mut inv_list_state);
-                    rect.render_widget(right, inv_chunks[1]);
-                },
-				MenuItem::Data => rect.render_widget(render_stat(), chunks[1]),
-				MenuItem::Map => rect.render_widget(render_stat(), chunks[1]),
-				MenuItem::Radio => rect.render_widget(render_stat(), chunks[1]),
-            }
-            //rect.render_widget(copyright, chunks[2]); */
         })?;
 
         match rx.recv()? {
             Event::Input(event) => match event.code {
-                KeyCode::Char('q') => {
+                KeyCode::Esc => {
                     disable_raw_mode()?;
                     terminal.show_cursor()?;
+					ratatui::restore();
                     break;
                 }
                 KeyCode::Char('s') => active_menu_item = MenuItem::Stat,
@@ -413,16 +328,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						}
 						MenuItem::Inv => {
 							active_inv_submenu = match active_inv_submenu {
-								InvSubMenu::Items => InvSubMenu::Weapons,
-								InvSubMenu::Aid => InvSubMenu::Items,
-								InvSubMenu::Weapons => InvSubMenu::Aid,
+								InvSubMenu::Weapons => InvSubMenu::Ammo,
+								InvSubMenu::Apparel => InvSubMenu::Weapons,
+								InvSubMenu::Aid => InvSubMenu::Apparel,
+								InvSubMenu::Misc => InvSubMenu::Aid,
+								InvSubMenu::Junk => InvSubMenu::Misc,
+								InvSubMenu::Mods => InvSubMenu::Junk,
+								InvSubMenu::Ammo => InvSubMenu::Mods,
 							};
 						}
 						MenuItem::Data => {
 							active_data_submenu = match active_data_submenu {
-								DataSubMenu::Quests => DataSubMenu::Notes,
-								DataSubMenu::Logs => DataSubMenu::Quests,
-								DataSubMenu::Notes => DataSubMenu::Logs,
+								DataSubMenu::Quests => DataSubMenu::Stats,
+								DataSubMenu::Workshops => DataSubMenu::Quests,
+								DataSubMenu::Stats => DataSubMenu::Workshops,
 							};
 						}
 						_ => {}
@@ -439,16 +358,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						}
 						MenuItem::Inv => {
 							active_inv_submenu = match active_inv_submenu {
-								InvSubMenu::Items => InvSubMenu::Aid,
-								InvSubMenu::Aid => InvSubMenu::Weapons,
-								InvSubMenu::Weapons => InvSubMenu::Items,
+								InvSubMenu::Weapons => InvSubMenu::Apparel,
+								InvSubMenu::Apparel => InvSubMenu::Aid,
+								InvSubMenu::Aid => InvSubMenu::Misc,
+								InvSubMenu::Misc => InvSubMenu::Junk,
+								InvSubMenu::Junk => InvSubMenu::Mods,
+								InvSubMenu::Mods => InvSubMenu::Ammo,
+								InvSubMenu::Ammo => InvSubMenu::Weapons,
 							};
 						}
 						MenuItem::Data => {
 							active_data_submenu = match active_data_submenu {
-								DataSubMenu::Quests => DataSubMenu::Logs,
-								DataSubMenu::Logs => DataSubMenu::Notes,
-								DataSubMenu::Notes => DataSubMenu::Quests,
+								DataSubMenu::Quests => DataSubMenu::Workshops,
+								DataSubMenu::Workshops => DataSubMenu::Stats,
+								DataSubMenu::Stats => DataSubMenu::Quests,
 							};
 						}
 						_ => {}
@@ -464,158 +387,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn render_stat<'a>() -> Paragraph<'a> {
-    let home = Paragraph::new(vec![
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::raw("Welcome")]),
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::raw("to")]),
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::styled(
-            "Pyp-Boy",
-            Style::default().fg(Color::LightBlue),
-        )]),
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::raw("Press 'i' to access inventory, 'a' to add random new items and 'd' to delete the currently selected item.")]),
-    ])
-    .alignment(Alignment::Center)
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::White))
-            .title("Home")
-            .border_type(BorderType::Plain),
-    );
-    home
-}
+fn draw_filtered_inventory<'a>(
+    rect: &mut tui::Frame<'a, CrosstermBackend<std::io::Stdout>>,
+    area: tui::layout::Rect,
+    inv_list_state: &mut ListState,
+    category: &str,
+) {
+    let inv_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(20), Constraint::Percentage(80)].as_ref())
+        .split(area);
 
-fn render_inv<'a>(inv_list_state: &ListState) -> (List<'a>, Table<'a>) {
-    let invs = Block::default()
-        .borders(Borders::ALL)
-        .style(Style::default().fg(Color::White))
-        .title("Items")
-        .border_type(BorderType::Plain);
-
-    let inv_list = read_db().expect("can fetch item list");
-    let items: Vec<_> = inv_list
-        .iter()
-        .map(|item| {
-            ListItem::new(Spans::from(vec![Span::styled(
-                item.name.clone(),
-                Style::default(),
-            )]))
-        })
-        .collect();
-
-    let selected_item = inv_list
-        .get(
-            inv_list_state
-                .selected()
-                .expect("there is always a selected item"),
-        )
-        .expect("exists")
-        .clone();
-
-    let list = List::new(items).block(invs).highlight_style(
-        Style::default()
-            .bg(Color::Yellow)
-            .fg(Color::Black)
-            .add_modifier(Modifier::BOLD),
-    );
-
-    let item_detail = Table::new(vec![Row::new(vec![
-        Cell::from(Span::raw(selected_item.id.to_string())),
-        Cell::from(Span::raw(selected_item.name)),
-        Cell::from(Span::raw(selected_item.category)),
-        Cell::from(Span::raw(selected_item.created_at.to_string())),
-    ])])
-    .header(Row::new(vec![
-        Cell::from(Span::styled(
-            "ID",
-            Style::default().add_modifier(Modifier::BOLD),
-        )),
-        Cell::from(Span::styled(
-            "Name",
-            Style::default().add_modifier(Modifier::BOLD),
-        )),
-        Cell::from(Span::styled(
-            "Category",
-            Style::default().add_modifier(Modifier::BOLD),
-        )),
-        Cell::from(Span::styled(
-            "Created At",
-            Style::default().add_modifier(Modifier::BOLD),
-        )),
-    ]))
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::White))
-            .title("Detail")
-            .border_type(BorderType::Plain),
-    )
-    .widths(&[
-        Constraint::Percentage(5),
-        Constraint::Percentage(20),
-        Constraint::Percentage(20),
-        Constraint::Percentage(5),
-        Constraint::Percentage(20),
-    ]);
-
-    (list, item_detail)
-}
-
-fn render_data<'a>() -> Paragraph<'a> {
-    let home = Paragraph::new(vec![
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::raw("Welcome")]),
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::raw("to")]),
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::styled(
-            "Pyp-Boy",
-            Style::default().fg(Color::LightBlue),
-        )]),
-        Spans::from(vec![Span::raw("")]),
-        Spans::from(vec![Span::raw("Press 'i' to access inventory, 'a' to add random new items and 'd' to delete the currently selected item.")]),
-    ])
-    .alignment(Alignment::Center)
-    .block(
-        Block::default()
-            .borders(Borders::ALL)
-            .style(Style::default().fg(Color::White))
-            .title("Home")
-            .border_type(BorderType::Plain),
-    );
-    home
-}
-fn render_map<'a>(coordinates: [f64; 2]) -> Paragraph<'a> {
-    let spatial_time = spatialtime::osm::lookup(coordinates[0], coordinates[1]).unwrap();
-
-	let mut spans = vec![];
-
-	spans.push(Span::styled(
-        format!("Time Zone: {}", spatial_time.tzid), // Extract and format the name
-        Style::default().add_modifier(Modifier::BOLD), // Style the location name
-    ));
-
-	let spans = Spans::from(spans);
-	let spatial_time_text = Text::from(spans);
-
-    Paragraph::new(spatial_time_text)
-        .alignment(Alignment::Left)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Map")
-                .border_type(BorderType::Plain),
-        )
-}
-
-fn read_db() -> Result<Vec<Item>, Error> {
-    let db_content = fs::read_to_string(DB_PATH)?;
-    let parsed: Vec<Item> = serde_json::from_str(&db_content)?;
-    Ok(parsed)
+    let (left, right) = render_inv(inv_list_state, category);
+    rect.render_stateful_widget(left, inv_chunks[0], inv_list_state);
+    rect.render_widget(right, inv_chunks[1]);
 }
 
 fn add_item_to_db() -> Result<Vec<Item>, Error> {
@@ -630,6 +415,7 @@ fn add_item_to_db() -> Result<Vec<Item>, Error> {
     let random_item = Item {
         id: rng.gen_range(0, 9999999),
         name: rng.sample_iter(Alphanumeric).take(10).collect(),
+		details: rng.sample_iter(Alphanumeric).take(20).collect(),
         category: category.to_owned(),
         created_at: Utc::now(),
     };
@@ -665,19 +451,12 @@ fn render_stat_settings<'a>() -> Paragraph<'a> {
     Paragraph::new("Settings").block(Block::default().title("STAT"))
 }
 
-fn render_inv_aid<'a>() -> Paragraph<'a> {
-    Paragraph::new("Aid").block(Block::default().title("INVENTORY"))
-}
-fn render_inv_weapons<'a>() -> Paragraph<'a> {
-    Paragraph::new("Weapons").block(Block::default().title("INVENTORY"))
-}
-
 fn render_data_quests<'a>() -> Paragraph<'a> {
     Paragraph::new("Quests").block(Block::default().title("DATA"))
 }
-fn render_data_logs<'a>() -> Paragraph<'a> {
-    Paragraph::new("Logs").block(Block::default().title("DATA"))
+fn render_data_workshops<'a>() -> Paragraph<'a> {
+    Paragraph::new("Workshops").block(Block::default().title("DATA"))
 }
-fn render_data_notes<'a>() -> Paragraph<'a> {
-    Paragraph::new("Notes").block(Block::default().title("DATA"))
+fn render_data_stats<'a>() -> Paragraph<'a> {
+    Paragraph::new("Stats").block(Block::default().title("DATA"))
 }

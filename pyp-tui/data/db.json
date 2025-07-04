@@ -1,14 +1,16 @@
 [
 	{
-		"id": 1,
+		"id": 0,
 		"name": "Printer Filament",
-		"category": "Industrial",
+		"details": "Unlimited possibilities are just waiting to be printed!",
+		"category": "Ammo",
 		"created_at": "2025-06-01T04:37:41Z"
 	},
 	{
-		"id": 2,
+		"id": 1,
 		"name": "Pizza",
-		"category": "Food",
+		"details": "Extra most bestest pie in existence",
+		"category": "Aid",
 		"created_at": "2025-06-01T04:37:41Z"
 	}
 ]
