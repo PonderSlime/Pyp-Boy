@@ -89,6 +89,7 @@ pub fn render_inv<'a>(
     inv_list_state: &ListState,
     category_filter: &'a str,
 ) -> (List<'a>, Paragraph<'a>) {
+    
     let invs = Block::default()
         .borders(Borders::ALL)
         .style(Style::default().fg(Color::White))
@@ -103,7 +104,7 @@ pub fn render_inv<'a>(
         .filter(|item| item.category.eq_ignore_ascii_case(category_filter))
         .collect();
 
-    let items: Vec<_> = filtered_items
+    let mut items: Vec<_> = filtered_items
         .iter()
         .map(|item| {
             ListItem::new(Spans::from(vec![Span::styled(
@@ -113,6 +114,12 @@ pub fn render_inv<'a>(
         })
         .collect();
 
+    items.push(ListItem::new(Spans::from(vec![Span::styled(
+    "+ Add New",
+    Style::default()
+        .fg(Color::Green)
+        .add_modifier(Modifier::BOLD),
+        )])));
     // ⚠️ Handle empty case gracefully
     let selected_item = filtered_items
         .get(inv_list_state.selected().unwrap_or(0))
