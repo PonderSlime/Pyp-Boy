@@ -4,7 +4,7 @@ author: "Micah Edwards"
 description: "Fully-Functional recreation of the Pip-Boy 3000 Mark IV from Fallout 4"
 created_at: "2024-05-22"
 ---
-## Total time spent: 20h
+## Total time spent: 25h
 
 # May 22nd-23rd: Started on Modeling the housing!
 
