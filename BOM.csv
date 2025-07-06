@@ -1,4 +1,4 @@
-"Part","Qty","Link", "Price"
+"Part","Qty","Link", "Price (USD)"
 "Raspberry Pi Zero 2", "1", "[https://www.adafruit.com/piz2w](link)", "16.50"
 "4.0 Inch Waveshare HDMI Display", "1", "[https://www.amazon.com/HDMI-LCD-Resolution-Resistive-Screen/dp/B07P5H2315](link)", "38.99"
 "V4 RTL-SDR Module", "1", "[https://www.amazon.com/RTL-SDR-Blog-RTL2832U-Software-Defined/dp/B0CD745394](link)", "37.95"
@@ -21,3 +21,4 @@
 "Distilled Water", "2", "[https://www.walmart.com/ip/Pure-Life-Distilled-Water-1-Gallon-Plastic-Bottled-Water-1-Pack-Side-Handle/1070666864](link)", "2.38"
 "Distilled White Vinegar", "2", "[https://www.walmart.com/ip/Great-Value-Distilled-White-Vinegar-128-fl-oz/10450998](link)", "3.94"
 "Metal Polish", "1", "[https://www.amazon.com/Brasso-2660089334-Multi-Purpose-Metal-Polish/dp/B00D600PLA/](link)", "4.98"
+"TOTAL", "", "[]()", "$307.31"
