@@ -15,11 +15,11 @@ cturing Information (PMI)---4.0---2014-10-13',
 
 FILE_NAME(
 /* name */ 'Part Studio 1 - Latch Hook',
-/* time_stamp */ '2025-07-06T02:22:29Z',
+/* time_stamp */ '2025-07-18T20:34:48Z',
 /* author */ (''),
 /* organization */ (''),
 /* preprocessor_version */ 'ST-DEVELOPER v20',
-/* originating_system */ 'ONSHAPE BY PTC INC, 1.200',
+/* originating_system */ 'ONSHAPE BY PTC INC, 1.201',
 /* authorisation */ '  ');
 
 FILE_SCHEMA (('AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF { 1 0 10303 442 1 1 4 }'));
