@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum MenuItem {
 	Stat,
     Inv,
@@ -45,7 +45,19 @@ pub enum InvSubMenu {
 	Mods,
 	Ammo,
 }
-
+impl InvSubMenu {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            InvSubMenu::Weapons => "Weapons",
+            InvSubMenu::Apparel => "Apparel",
+            InvSubMenu::Aid => "Aid",
+            InvSubMenu::Misc => "Misc",
+            InvSubMenu::Junk => "Junk",
+            InvSubMenu::Mods => "Mods",
+            InvSubMenu::Ammo => "Ammo",
+        }
+    }
+}
 impl From<InvSubMenu> for usize {
     fn from(input: InvSubMenu) -> usize {
         match input {

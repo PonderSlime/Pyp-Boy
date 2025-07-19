@@ -1,11 +1,19 @@
 use reverse_geocoder::{ReverseGeocoder};
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::fs;
 use std::io;
+use std::time::Duration;
+use ratatui::prelude::*;
+use crossterm::{
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use std::fs;
 use thiserror::Error;
-use tui::{
+use rand::{distributions::Alphanumeric, prelude::*};
 
+use tui::{
     layout::{Alignment, Constraint},
     style::{Color, Modifier, Style},
     text::{Span, Spans, Text},
@@ -13,7 +21,8 @@ use tui::{
         Block, BorderType, Borders, Cell, List, ListItem, ListState, Paragraph, Row, Table, Wrap
     },
 };
-
+use crate::kb;
+use kb::show_virtual_keyboard;
 const DB_PATH: &str = "./data/db.json";
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -88,8 +97,7 @@ pub fn render_stat<'a>() -> Paragraph<'a> {
 pub fn render_inv<'a>(
     inv_list_state: &ListState,
     category_filter: &'a str,
-) -> (List<'a>, Paragraph<'a>) {
-    
+) -> (List<'a>, Paragraph<'a>) {    
     let invs = Block::default()
         .borders(Borders::ALL)
         .style(Style::default().fg(Color::White))
@@ -165,7 +173,33 @@ pub fn render_inv<'a>(
 
     (list, paragraph)
 }
+pub fn add_item_to_db() -> Result<Vec<Item>, Error> {
+    let mut stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+	let mut terminal = Terminal::new(backend)?;
+    let mut rng = rand::thread_rng();
+    let db_content = fs::read_to_string(DB_PATH)?;
+    let mut parsed: Vec<Item> = serde_json::from_str(&db_content)?;
 
+    let name = show_virtual_keyboard(&mut terminal, "Item Name")
+        .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
+    let category = show_virtual_keyboard(&mut terminal, "Item Category")
+        .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
+    let details = show_virtual_keyboard(&mut terminal, "Item Details")
+        .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
+
+    let random_item = Item {
+        id: rng.gen_range(0, 9999999),
+        name,
+        details,
+        category,
+        created_at: Utc::now(),
+    };
+
+    parsed.push(random_item);
+    fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
+    Ok(parsed)
+}
 
 pub fn render_data<'a>() -> Paragraph<'a> {
     let home = Paragraph::new(vec![

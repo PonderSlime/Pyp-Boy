@@ -1,16 +1,1 @@
-[
-	{
-		"id": 0,
-		"name": "Printer Filament",
-		"details": "Unlimited possibilities are just waiting to be printed!",
-		"category": "Ammo",
-		"created_at": "2025-06-01T04:37:41Z"
-	},
-	{
-		"id": 1,
-		"name": "Pizza",
-		"details": "Extra most bestest pie in existence",
-		"category": "Aid",
-		"created_at": "2025-06-01T04:37:41Z"
-	}
-]
+[{"id":0,"name":"Printer Filament","details":"Unlimited possibilities are just waiting to be printed!","category":"Ammo","created_at":"2025-06-01T04:37:41Z"},{"id":1,"name":"Pizza","details":"Extra most bestest pie in existence","category":"Aid","created_at":"2025-06-01T04:37:41Z"},{"id":5794758,"name":"","details":"","category":"","created_at":"2025-07-13T02:49:46.054605491Z"},{"id":9907901,"name":"Y","details":"","category":"","created_at":"2025-07-13T02:55:31.033716995Z"},{"id":4912526,"name":"","details":"","category":"","created_at":"2025-07-13T02:55:41.922257603Z"},{"id":8572832,"name":"","details":"","category":"","created_at":"2025-07-13T02:56:55.244974422Z"},{"id":832751,"name":"","details":"","category":"","created_at":"2025-07-13T19:12:13.316879322Z"}]

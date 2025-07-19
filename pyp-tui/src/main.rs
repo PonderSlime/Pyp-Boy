@@ -1,7 +1,8 @@
 use chrono::prelude::*;
 use crossterm::{
-    event::{self, Event as CEvent, KeyCode},
-    terminal::{disable_raw_mode, enable_raw_mode},
+    event::{self, DisableMouseCapture, EnableMouseCapture, Event as CEvent, KeyCode},
+	execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use rand::{distributions::Alphanumeric, prelude::*};
 
@@ -32,8 +33,9 @@ const DB_PATH: &str = "./data/db.json";
 
 mod render_tabs;
 mod menus;
+mod kb;
 
-use render_tabs::{render_map, render_stat, render_data, render_inv, read_db, get_map_data, Item,};
+use render_tabs::{render_map, render_stat, render_data, render_inv, read_db, get_map_data, Item, add_item_to_db,};
 use menus::{MenuItem, StatSubMenu, InvSubMenu, DataSubMenu};
 
 #[derive(Error, Debug)]
@@ -74,6 +76,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     enable_raw_mode().expect("can run in raw mode");
+	let mut stdout = io::stdout();
+
+	execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+	
 
     let (tx, rx) = mpsc::channel();
     let tick_rate = Duration::from_millis(200);
@@ -317,6 +323,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                 }
+				KeyCode::Enter => {
+					if active_menu_item == MenuItem::Inv {
+						if let Some(selected) = inv_list_state.selected() {
+							let filtered_items: Vec<Item> = read_db()
+								.expect("can fetch item list")
+								.into_iter()
+								.filter(|item| item.category.eq_ignore_ascii_case(active_inv_submenu.as_str()))
+								.collect();
+
+							if selected == filtered_items.len() {
+								add_item_to_db().expect("can add new item");
+								// Reset selection to the first item
+								inv_list_state.select(Some(0));
+							}
+						}
+					}
+				}
+
+
 				KeyCode::Left => {
 					match active_menu_item {
 						MenuItem::Stat => {
@@ -403,27 +428,7 @@ fn draw_filtered_inventory<'a>(
     rect.render_widget(right, inv_chunks[1]);
 }
 
-fn add_item_to_db() -> Result<Vec<Item>, Error> {
-    let mut rng = rand::thread_rng();
-    let db_content = fs::read_to_string(DB_PATH)?;
-    let mut parsed: Vec<Item> = serde_json::from_str(&db_content)?;
-    let category = match rng.gen_range(0, 1) {
-        0 => "Food",
-        _ => "Industrial",
-    };
 
-    let random_item = Item {
-        id: rng.gen_range(0, 9999999),
-        name: rng.sample_iter(Alphanumeric).take(10).collect(),
-		details: rng.sample_iter(Alphanumeric).take(20).collect(),
-        category: category.to_owned(),
-        created_at: Utc::now(),
-    };
-
-    parsed.push(random_item);
-    fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
-    Ok(parsed)
-}
 
 fn remove_item_at_index(inv_list_state: &mut ListState) -> Result<(), Error> {
     if let Some(selected) = inv_list_state.selected() {
