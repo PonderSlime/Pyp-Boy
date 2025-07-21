@@ -74,9 +74,17 @@ I decided that I wanted to code a TUI (terminal user interface) using rust, to u
 
 **Time spent: 2h**
 
-# July 3-4 Working on Organization, Adding Map Data
+# July 3-4: Working on Organization, Adding Map Data
 I decided to start organizing my script, by breaking it up into seperate files. Also, I was able to finally get the map data stuff working. Origonally, I was going to go for a ascii art map centered on the coordinates from the gps module, but I couldn't get that working. It will just be data instead. And the best part? It works offline, with a small library size! Also, I implemented an escape button that erases any evidence of the tui being open! In addition, I fixed the inventory tabs so that they change content based on category.
 
 https://github.com/user-attachments/assets/03545f6d-08a7-4fc2-ad75-7554e2540552
 
 **Time spent: 5h**
+
+# July 16-20: Case Design Fixes and Assembly
+I finally got all the parts for my project! I started by fixing all of my case design files so that they could fit my components. This took about four hours, and I modified the encoder holes so they could fit more snugly, added mounting posts for the raspberry pi and gps module, and added a nice cutout for my battery and wiring stuff. I also worked a bit on assembling my project, and got everything put together!
+
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/0b8f877d28e4e5ec8f6f84db51e3453ea9cfeb9f_2025-07-20-210547_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/0b8f877d28e4e5ec8f6f84db51e3453ea9cfeb9f_2025-07-20-210547_hyprshot.png)
+![https://hc-cdn.hel1.your-objectstorage.com/s/v3/38d9a39f9074412fb17914c7675049f7af02daad_2025-07-20-210528_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/38d9a39f9074412fb17914c7675049f7af02daad_2025-07-20-210528_hyprshot.png)
+
+**Time spent: 7h**
