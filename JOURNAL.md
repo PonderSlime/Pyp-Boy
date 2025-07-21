@@ -86,5 +86,9 @@ I finally got all the parts for my project! I started by fixing all of my case d
 
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/0b8f877d28e4e5ec8f6f84db51e3453ea9cfeb9f_2025-07-20-210547_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/0b8f877d28e4e5ec8f6f84db51e3453ea9cfeb9f_2025-07-20-210547_hyprshot.png)
 ![https://hc-cdn.hel1.your-objectstorage.com/s/v3/38d9a39f9074412fb17914c7675049f7af02daad_2025-07-20-210528_hyprshot.png](https://hc-cdn.hel1.your-objectstorage.com/s/v3/38d9a39f9074412fb17914c7675049f7af02daad_2025-07-20-210528_hyprshot.png)
+![IMG_0210](https://github.com/user-attachments/assets/755b1e86-1815-4f1d-8a5f-1d06408fefcb)
+![IMG_0212](https://github.com/user-attachments/assets/23ae9631-d055-43d0-92d1-bf006002449a)
+![IMG_0213](https://github.com/user-attachments/assets/26408e2a-5733-44aa-b070-33a7253cbe5a)
+![IMG_0214](https://github.com/user-attachments/assets/b7f94a36-2e0e-484d-b057-79cac3e2026d)
 
 **Time spent: 7h**
