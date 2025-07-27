@@ -22,14 +22,15 @@ use tui::{
     },
 };
 use crate::kb;
-use kb::show_virtual_keyboard;
+use kb::{show_virtual_keyboard, centered_rect};
 const DB_PATH: &str = "./data/db.json";
-
+use ratatui::widgets;
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Item {
     pub id: usize,
     pub name: String,
     pub details: String,
+    pub quantity: u32,
     pub category: String,
     pub created_at: DateTime<Utc>,
 }
@@ -136,6 +137,7 @@ pub fn render_inv<'a>(
             id: 0,
             name: "ERR".into(),
             details: "ERR".into(),
+            quantity: 1,
             category: category_filter.into(),
             created_at: chrono::Utc::now(),
         });
@@ -183,15 +185,17 @@ pub fn add_item_to_db() -> Result<Vec<Item>, Error> {
 
     let name = show_virtual_keyboard(&mut terminal, "Item Name")
         .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
-    let category = show_virtual_keyboard(&mut terminal, "Item Category")
+    let category = show_category_selector(&mut terminal)
         .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
     let details = show_virtual_keyboard(&mut terminal, "Item Details")
         .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
-
+    let quantity = show_quantity_selector(&mut terminal)
+        .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
     let random_item = Item {
         id: rng.gen_range(0, 9999999),
         name,
         details,
+        quantity,
         category,
         created_at: Utc::now(),
     };
@@ -199,6 +203,126 @@ pub fn add_item_to_db() -> Result<Vec<Item>, Error> {
     parsed.push(random_item);
     fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
     Ok(parsed)
+}
+pub fn show_category_selector<B: Backend>(terminal: &mut Terminal<B>) -> io::Result<String> {
+    let categories = vec!["Weapons", "Apparel", "Aid", "Misc", "Junk", "Mods", "Ammo"];
+    let mut state = widgets::ListState::default();
+    state.select(Some(0)); // Select the first item by default
+
+    loop {
+        terminal.clear();
+        terminal.draw(|f| {
+            let size = centered_rect(70, 50, f.area()); // Use .area() instead of .size() as per recommendation
+            let items: Vec<widgets::ListItem> = categories
+                .iter()
+                .map(|c| widgets::ListItem::new(*c))
+                .collect();
+
+            let list = widgets::List::new(items)
+                .block(widgets::Block::default().borders(widgets::Borders::ALL).title("Select Category"))
+                .highlight_style(
+                    ratatui::style::Style::default()
+                        .bg(ratatui::style::Color::LightBlue)
+                        .fg(ratatui::style::Color::Black)
+                        .add_modifier(ratatui::style::Modifier::BOLD),
+                );
+
+            // Pass 'list' by value, and the mutable reference to 'state'
+            f.render_stateful_widget(list, size, &mut state);
+        })?;
+
+        // Handle events for navigation and selection
+        if let Event::Key(key) = event::read().map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))? {
+            match key.code {
+                KeyCode::Char('w') | KeyCode::Char('W') => {
+                    let i = match state.selected() {
+                        Some(i) if i > 0 => i - 1,
+                        _ => 0, // Wrap around to the last item, or stay at 0
+                    };
+                    state.select(Some(i));
+                }
+                KeyCode::Char('s') | KeyCode::Char('S') => {
+                    let i = match state.selected() {
+                        Some(i) if i < categories.len() - 1 => i + 1,
+                        _ => categories.len() - 1, // Wrap around to the first item, or stay at the last
+                    };
+                    state.select(Some(i));
+                }
+                KeyCode::Enter => {
+                    if let Some(i) = state.selected() {
+                        return Ok(categories[i].to_string()); // Return the selected category
+                    }
+                }
+                KeyCode::Esc => {
+                    return Err(io::Error::new(io::ErrorKind::Interrupted, "Category selection cancelled")); // Allow escaping
+                }
+                _ => {} // Ignore other keys
+            }
+        }
+    }
+}
+pub fn show_quantity_selector<B: Backend>(terminal: &mut Terminal<B>) -> io::Result<u32> {
+    // Generate a vector of strings "0" through "99"
+    let categories: Vec<String> = (0..100).map(|i| i.to_string()).collect();
+    let mut state = widgets::ListState::default();
+    state.select(Some(0)); // Select the first item by default
+
+    loop {
+        terminal.clear();
+        terminal.draw(|f| {
+            let size = centered_rect(70, 50, f.area()); // Use .area() instead of .size() as per recommendation
+            let items: Vec<widgets::ListItem> = categories
+                .iter()
+                .map(|c| widgets::ListItem::new(c.as_str())) // Use .as_str() for ListItem
+                .collect();
+
+            let list = widgets::List::new(items)
+                .block(widgets::Block::default().borders(widgets::Borders::ALL).title("Select Quantity")) // Changed title
+                .highlight_style(
+                    ratatui::style::Style::default()
+                        .bg(ratatui::style::Color::LightBlue)
+                        .fg(ratatui::style::Color::Black)
+                        .add_modifier(ratatui::prelude::Modifier::BOLD),
+                );
+
+            // Pass 'list' by value, and the mutable reference to 'state'
+            f.render_stateful_widget(list, size, &mut state);
+        })?;
+
+        // Handle events for navigation and selection
+        if let Event::Key(key) = event::read().map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))? {
+            match key.code {
+                KeyCode::Char('w') | KeyCode::Char('W') => {
+                    let i = match state.selected() {
+                        Some(i) if i > 0 => i - 1,
+                        _ => categories.len() - 1, // Wrap around to the last item
+                    };
+                    state.select(Some(i));
+                }
+                KeyCode::Char('s') | KeyCode::Char('S') => {
+                    let i = match state.selected() {
+                        Some(i) if i < categories.len() - 1 => i + 1,
+                        _ => 0, // Wrap around to the first item
+                    };
+                    state.select(Some(i));
+                }
+                KeyCode::Enter => {
+                    if let Some(selected_index) = state.selected() {
+                        // Parse the selected string into a u32
+                        let quantity_str = categories[selected_index].clone();
+                        let quantity: u32 = quantity_str.parse().map_err(|e| {
+                            io::Error::new(io::ErrorKind::InvalidData, format!("Failed to parse quantity: {}", e))
+                        })?;
+                        return Ok(quantity);
+                    }
+                }
+                KeyCode::Esc => {
+                    return Err(io::Error::new(io::ErrorKind::Interrupted, "Selection cancelled"));
+                }
+                _ => {}
+            }
+        }
+    }
 }
 
 pub fn render_data<'a>() -> Paragraph<'a> {

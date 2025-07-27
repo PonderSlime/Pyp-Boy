@@ -3,15 +3,12 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Table, Row, Clear},
 };
 use crossterm::{
-    event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode},
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    event::{self, Event, KeyCode},
 };
 use std::io;
 use std::time::{Duration, Instant};
 
-// Utility: Centered area calculation
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints(
@@ -37,27 +34,26 @@ fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
         .split(popup_layout[1])[1]
 }
 
-// Keyboard popup function using ratatui 0.29 conventions
 pub fn show_virtual_keyboard(
-    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>, kb_title: &str
+    terminal: &mut Terminal<CrosstermBackend<std::io::Stdout>>,
+    kb_title: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut input = String::new();
     let keyboard_layout = vec![
         vec!['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
         vec!['K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T'],
         vec!['U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3'],
-        vec!['4', '5', '6', '7', '8', '9', ' ', '←', '<', ' '],
+        vec!['4', '5', '6', '7', '8', '9', ' ', '←', '<', ' '], 
     ];
 
-
-
     let mut cursor_pos = (0, 0);
-    let tick_rate = Duration::from_millis(100);
-    let mut last_tick = Instant::now();
+
     loop {
+        terminal.clear();
         terminal.draw(|f| {
-            f.render_widget(Clear, f.size());
-            let area = centered_rect(70, 50, f.size());
+            
+            let area = centered_rect(70, 50, f.area());
+            f.render_widget(Clear, area);
             
             let rows: Vec<Row> = keyboard_layout
                 .iter()
@@ -67,22 +63,29 @@ pub fn show_virtual_keyboard(
                         row.iter()
                             .enumerate()
                             .map(|(x, &ch)| {
-                                if (y, x) == cursor_pos {
-                                    format!("[{}]", ch)
+                                let content = if ch == '←' {
+                                    "Bksp".to_string()
                                 } else {
-                                    format!(" {} ", ch)
+                                    ch.to_string()
+                                };
+
+                                if (y, x) == cursor_pos {
+                                    Span::styled(format!("[{}]", content), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+                                } else {
+                                    Span::raw(format!(" {} ", content))
                                 }
                             })
                             .collect::<Vec<_>>(),
                     )
                 })
                 .collect();
+
             let max_cols = keyboard_layout.iter().map(|row| row.len()).max().unwrap_or(1);
-            let widths = vec![Constraint::Length(4); max_cols];
+            let widths: Vec<Constraint> = vec![Constraint::Length(6); max_cols];
 
             let table = Table::new(rows, widths)
                 .block(Block::default().title("Keyboard").borders(Borders::ALL));
-            
+
             f.render_widget(table, area);
 
             let input_area = Rect {
@@ -95,58 +98,60 @@ pub fn show_virtual_keyboard(
             let preview = Paragraph::new(format!("Input: {}", input))
                 .block(Block::default().borders(Borders::ALL).title(kb_title));
             f.render_widget(preview, input_area);
+
         })?;
-        let timeout = tick_rate
-            .checked_sub(last_tick.elapsed())
-            .unwrap_or_else(|| Duration::from_secs(0));
-        if event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
+
+        if let Event::Key(key) = event::read().map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))? {
                 match key.code {
-                    KeyCode::Left => {
+                    KeyCode::Char('A') | KeyCode::Char('a') => {
                         if cursor_pos.1 > 0 {
                             cursor_pos.1 -= 1;
                         }
                     }
-                    KeyCode::Right => {
-                        if cursor_pos.1 < keyboard_layout[0].len() - 1 {
+                    KeyCode::Char('D') | KeyCode::Char('d') => {
+                        if cursor_pos.1 < keyboard_layout[cursor_pos.0].len() - 1 {
                             cursor_pos.1 += 1;
                         }
                     }
-                    KeyCode::Up => {
+                    KeyCode::Char('W') | KeyCode::Char('w') => {
                         if cursor_pos.0 > 0 {
                             cursor_pos.0 -= 1;
+                            
+                            if cursor_pos.1 >= keyboard_layout[cursor_pos.0].len() {
+                                cursor_pos.1 = keyboard_layout[cursor_pos.0].len() - 1;
+                            }
                         }
                     }
-                    KeyCode::Down => {
+                    KeyCode::Char('S') | KeyCode::Char('s') => {
                         if cursor_pos.0 < keyboard_layout.len() - 1 {
                             cursor_pos.0 += 1;
+                           
+                            if cursor_pos.1 >= keyboard_layout[cursor_pos.0].len() {
+                                cursor_pos.1 = keyboard_layout[cursor_pos.0].len() - 1;
+                            }
                         }
                     }
                     KeyCode::Enter => {
                         let ch = keyboard_layout[cursor_pos.0][cursor_pos.1];
                         match ch {
-                            '<' => return Ok(input),
                             '←' => {
                                 input.pop();
+                            }
+                            '<' => return Ok(input),
+                            ' ' if cursor_pos == (3, 8) => {
+                                return Ok(input);
                             }
                             _ => input.push(ch),
                         }
                     }
-
-                    KeyCode::Esc => {
-                        return Ok(input);
+                    KeyCode::Char(c) => {
+                        if c.is_ascii_alphanumeric() || c == ' ' {
+                            input.push(c);
+                        }
                     }
                     _ => {}
                 }
-            }
-        }
-        if last_tick.elapsed() >= tick_rate {
-            terminal.draw(|f| {
-                let area = centered_rect(70, 50, f.size());
-                f.render_widget(Clear, area);
-                // draw table and preview here
-            })?;
-            last_tick = Instant::now();
+            
         }
     }
 }

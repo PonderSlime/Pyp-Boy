@@ -11,6 +11,7 @@ use std::io;
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant};
+use std::error::Error as StdError;
 use thiserror::Error;
 use tui::{
     backend::CrosstermBackend,
@@ -22,6 +23,7 @@ use tui::{
     },
     Terminal,
 };
+use gpsd_client::*;
 
 extern crate linux_embedded_hal as hal;
 extern crate max3010x;
@@ -50,11 +52,37 @@ enum Event<I> {
     Input(I),
     Tick,
 }
-
+#[derive(Debug, PartialEq)]
+pub struct Coordinates {
+    pub latitude: f64,
+    pub longitude: f64,
+}
+pub fn get_current_coordinates_array() -> Result<[f64; 2], Box<dyn StdError>> {
+    let mut gps = GPS::connect()
+    	.map_err(|e| Box::<dyn StdError>::from(format!("GPS connect error: {:?}", e)))?;
+	let data: GPSData = gps.current_data()
+    	.map_err(|e| Box::<dyn StdError>::from(format!("GPS data error: {:?}", e)))?;
+	if data.lat.is_finite() && data.lon.is_finite() {
+    	Ok([data.lat, data.lon])
+	} else {
+		Err(Box::new(io::Error::new(
+			io::ErrorKind::NotFound,
+			"Latitude or longitude invalid in GPS data",
+		)))
+	}
+}
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 	
-
-	let coords: [f64; 2] = [44.817028, -89.736273];
+	let coords: [f64; 2] = match get_current_coordinates_array() {
+        Ok(c) => c, // If the function returns Ok, extract the array
+        Err(e) => {
+            eprintln!("Error getting coordinates: {}", e);
+            // Handle the error (e.g., return a default value, exit the program)
+            // For now, we'll use a placeholder array in case of error.
+            // In a real application, you might panic! or exit().
+            [0.0, 0.0]
+        }
+    };
 
 	let mut map_data: Option<String> = None;
 	let mut start_time = Instant::now();
@@ -129,8 +157,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
   	let dev = sensor.destroy(); */
 
     loop {
+		terminal.clear();
         terminal.draw(|rect| {
             let size = rect.size();
+			
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
                 .margin(2)
@@ -297,11 +327,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					ratatui::restore();
                     break;
                 }
-                KeyCode::Char('s') => active_menu_item = MenuItem::Stat,
-                KeyCode::Char('i') => active_menu_item = MenuItem::Inv,
-                KeyCode::Char('d') => active_menu_item = MenuItem::Data,
-                KeyCode::Char('m') => active_menu_item = MenuItem::Map,
-				KeyCode::Char('r') => active_menu_item = MenuItem::Radio,
+                KeyCode::Left => {
+					active_menu_item = match active_menu_item {
+						MenuItem::Stat => MenuItem::Radio,
+						MenuItem::Inv => MenuItem::Stat,
+						MenuItem::Data => MenuItem::Inv,
+						MenuItem::Map => MenuItem::Data,
+						MenuItem::Radio => MenuItem::Map,
+					};
+				}
+				KeyCode::Right => {
+					active_menu_item = match active_menu_item {
+						MenuItem::Stat => MenuItem::Inv,
+						MenuItem::Inv => MenuItem::Data,
+						MenuItem::Data => MenuItem::Map,
+						MenuItem::Map => MenuItem::Radio,
+						MenuItem::Radio => MenuItem::Stat,
+					};
+				}
 
                 KeyCode::Down => {
                     if let Some(selected) = inv_list_state.selected() {
@@ -337,12 +380,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 								// Reset selection to the first item
 								inv_list_state.select(Some(0));
 							}
+							/* else {
+								
+								//change_item_quantity(inv_list_state.selected())
+							} */
 						}
 					}
 				}
 
 
-				KeyCode::Left => {
+				KeyCode::Char('+') => {
 					match active_menu_item {
 						MenuItem::Stat => {
 							active_stat_submenu = match active_stat_submenu {
@@ -372,7 +419,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						_ => {}
 					}
 				}
-				KeyCode::Right => {
+				KeyCode::Char('-') => {
 					match active_menu_item {
 						MenuItem::Stat => {
 							active_stat_submenu = match active_stat_submenu {
