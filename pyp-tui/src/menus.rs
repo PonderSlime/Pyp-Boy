@@ -18,6 +18,7 @@ impl From<MenuItem> for usize {
         }
     }
 }
+
 #[derive(Copy, Clone, Debug)]
 pub enum StatSubMenu {
     General,
@@ -45,6 +46,7 @@ pub enum InvSubMenu {
 	Mods,
 	Ammo,
 }
+
 impl InvSubMenu {
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -58,6 +60,7 @@ impl InvSubMenu {
         }
     }
 }
+
 impl From<InvSubMenu> for usize {
     fn from(input: InvSubMenu) -> usize {
         match input {
@@ -68,7 +71,6 @@ impl From<InvSubMenu> for usize {
             InvSubMenu::Junk => 4,
             InvSubMenu::Mods => 5,
 			InvSubMenu::Ammo => 6,
-      
         }
     }
 }

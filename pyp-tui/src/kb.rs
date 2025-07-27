@@ -2,6 +2,7 @@ use ratatui::{
     prelude::*,
     widgets::{Block, Borders, Paragraph, Table, Row, Clear},
 };
+use ratatui::widgets::Cell;
 use crossterm::{
     event::{self, Event, KeyCode},
 };
@@ -51,10 +52,9 @@ pub fn show_virtual_keyboard(
     loop {
         terminal.clear();
         terminal.draw(|f| {
-            
             let area = centered_rect(70, 50, f.area());
             f.render_widget(Clear, area);
-            
+
             let rows: Vec<Row> = keyboard_layout
                 .iter()
                 .enumerate()
@@ -70,9 +70,14 @@ pub fn show_virtual_keyboard(
                                 };
 
                                 if (y, x) == cursor_pos {
-                                    Span::styled(format!("[{}]", content), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+                                    Cell::from(Span::styled(
+                                        format!("[{}]", content),
+                                        Style::default()
+                                            .fg(Color::Yellow)
+                                            .add_modifier(Modifier::BOLD),
+                                    ))
                                 } else {
-                                    Span::raw(format!(" {} ", content))
+                                    Cell::from(Span::raw(format!(" {} ", content)))
                                 }
                             })
                             .collect::<Vec<_>>(),
@@ -98,60 +103,56 @@ pub fn show_virtual_keyboard(
             let preview = Paragraph::new(format!("Input: {}", input))
                 .block(Block::default().borders(Borders::ALL).title(kb_title));
             f.render_widget(preview, input_area);
-
         })?;
 
         if let Event::Key(key) = event::read().map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))? {
-                match key.code {
-                    KeyCode::Char('A') | KeyCode::Char('a') => {
-                        if cursor_pos.1 > 0 {
-                            cursor_pos.1 -= 1;
-                        }
+            match key.code {
+                KeyCode::Char('A') | KeyCode::Char('a') => {
+                    if cursor_pos.1 > 0 {
+                        cursor_pos.1 -= 1;
                     }
-                    KeyCode::Char('D') | KeyCode::Char('d') => {
-                        if cursor_pos.1 < keyboard_layout[cursor_pos.0].len() - 1 {
-                            cursor_pos.1 += 1;
-                        }
-                    }
-                    KeyCode::Char('W') | KeyCode::Char('w') => {
-                        if cursor_pos.0 > 0 {
-                            cursor_pos.0 -= 1;
-                            
-                            if cursor_pos.1 >= keyboard_layout[cursor_pos.0].len() {
-                                cursor_pos.1 = keyboard_layout[cursor_pos.0].len() - 1;
-                            }
-                        }
-                    }
-                    KeyCode::Char('S') | KeyCode::Char('s') => {
-                        if cursor_pos.0 < keyboard_layout.len() - 1 {
-                            cursor_pos.0 += 1;
-                           
-                            if cursor_pos.1 >= keyboard_layout[cursor_pos.0].len() {
-                                cursor_pos.1 = keyboard_layout[cursor_pos.0].len() - 1;
-                            }
-                        }
-                    }
-                    KeyCode::Enter => {
-                        let ch = keyboard_layout[cursor_pos.0][cursor_pos.1];
-                        match ch {
-                            '←' => {
-                                input.pop();
-                            }
-                            '<' => return Ok(input),
-                            ' ' if cursor_pos == (3, 8) => {
-                                return Ok(input);
-                            }
-                            _ => input.push(ch),
-                        }
-                    }
-                    KeyCode::Char(c) => {
-                        if c.is_ascii_alphanumeric() || c == ' ' {
-                            input.push(c);
-                        }
-                    }
-                    _ => {}
                 }
-            
+                KeyCode::Char('D') | KeyCode::Char('d') => {
+                    if cursor_pos.1 < keyboard_layout[cursor_pos.0].len() - 1 {
+                        cursor_pos.1 += 1;
+                    }
+                }
+                KeyCode::Char('W') | KeyCode::Char('w') => {
+                    if cursor_pos.0 > 0 {
+                        cursor_pos.0 -= 1;
+                        if cursor_pos.1 >= keyboard_layout[cursor_pos.0].len() {
+                            cursor_pos.1 = keyboard_layout[cursor_pos.0].len() - 1;
+                        }
+                    }
+                }
+                KeyCode::Char('S') | KeyCode::Char('s') => {
+                    if cursor_pos.0 < keyboard_layout.len() - 1 {
+                        cursor_pos.0 += 1;
+                        if cursor_pos.1 >= keyboard_layout[cursor_pos.0].len() {
+                            cursor_pos.1 = keyboard_layout[cursor_pos.0].len() - 1;
+                        }
+                    }
+                }
+                KeyCode::Enter => {
+                    let ch = keyboard_layout[cursor_pos.0][cursor_pos.1];
+                    match ch {
+                        '←' => {
+                            input.pop();
+                        }
+                        '<' => return Ok(input),
+                        ' ' if cursor_pos == (3, 8) => {
+                            return Ok(input);
+                        }
+                        _ => input.push(ch),
+                    }
+                }
+                KeyCode::Char(c) => {
+                    if c.is_ascii_alphanumeric() || c == ' ' {
+                        input.push(c);
+                    }
+                }
+                _ => {}
+            }
         }
     }
 }

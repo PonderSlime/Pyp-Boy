@@ -13,16 +13,16 @@ use std::thread;
 use std::time::{Duration, Instant};
 use std::error::Error as StdError;
 use thiserror::Error;
-use tui::{
+use ratatui::{
     backend::CrosstermBackend,
     layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
-    text::{Span, Spans},
-    widgets::{
-        Block, BorderType, Borders, ListState, Paragraph, Tabs,
-    },
+    text::{Span, Line, Text},
+    widgets::{Block, BorderType, Borders, ListState, Paragraph, Tabs},
     Terminal,
+    Frame,
 };
+
 use gpsd_client::*;
 
 extern crate linux_embedded_hal as hal;
@@ -37,7 +37,7 @@ mod render_tabs;
 mod menus;
 mod kb;
 
-use render_tabs::{render_map, render_stat, render_data, render_inv, read_db, get_map_data, Item, add_item_to_db,};
+use render_tabs::{render_map, render_stat, render_data, render_inv, read_db, get_map_data, Item, add_item_to_db, show_quantity_selector,};
 use menus::{MenuItem, StatSubMenu, InvSubMenu, DataSubMenu};
 
 #[derive(Error, Debug)]
@@ -139,7 +139,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let menu_titles = vec!["STAT", "INV", "DATA", "MAP", "RADIO"];
     let mut active_menu_item = MenuItem::Stat;
-    let mut inv_list_state = ListState::default();
+    let mut inv_list_state = &mut ListState::default();
     inv_list_state.select(Some(0));
 
 	/* let dev = hal::I2cdev::new("/dev/i2c-1").unwrap();
@@ -159,7 +159,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     loop {
 		terminal.clear();
         terminal.draw(|rect| {
-            let size = rect.size();
+            let size = rect.area();
 			
             let chunks = Layout::default()
                 .direction(Direction::Vertical)
@@ -187,11 +187,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         .border_type(BorderType::Plain),
                 );
 
-            let menu = menu_titles
+            let menu: Vec<Line> = menu_titles
                 .iter()
                 .map(|t| {
                     let (first, rest) = t.split_at(1);
-                    Spans::from(vec![
+                    Line::from(vec![
                         Span::styled(
                             first,
                             Style::default()
@@ -204,7 +204,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .collect();
 			
             let tabs = Tabs::new(menu)
-                .select(active_menu_item.into())
+                .select(Some(active_menu_item.into()))
                 .block(Block::default().title("STAT").borders(Borders::ALL))
                 .style(Style::default().fg(Color::White))
                 .highlight_style(Style::default().fg(Color::Yellow))
@@ -216,12 +216,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						.iter()
 						.map(|t| {
 							let (first, rest) = t.split_at(1);
-							Spans::from(vec![
+							Line::from(vec![
 								Span::styled(first, Style::default().fg(Color::Green).add_modifier(Modifier::UNDERLINED)),
 								Span::styled(rest, Style::default().fg(Color::White)),
 							])
 						})
-						.collect::<Vec<Spans>>(),
+						.collect::<Vec<Line>>(),
 					active_stat_submenu.into(),
 				),
 				MenuItem::Inv => (
@@ -229,12 +229,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						.iter()
 						.map(|t| {
 							let (first, rest) = t.split_at(1);
-							Spans::from(vec![
+							Line::from(vec![
 								Span::styled(first, Style::default().fg(Color::Green).add_modifier(Modifier::UNDERLINED)),
 								Span::styled(rest, Style::default().fg(Color::White)),
 							])
 						})
-						.collect::<Vec<Spans>>(),
+						.collect::<Vec<Line>>(),
 					active_inv_submenu.into(),
 				),
 				MenuItem::Data => (
@@ -242,12 +242,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 						.iter()
 						.map(|t| {
 							let (first, rest) = t.split_at(1);
-							Spans::from(vec![
+							Line::from(vec![
 								Span::styled(first, Style::default().fg(Color::Green).add_modifier(Modifier::UNDERLINED)),
 								Span::styled(rest, Style::default().fg(Color::White)),
 							])
 						})
-						.collect::<Vec<Spans>>(),
+						.collect::<Vec<Line>>(),
 					active_data_submenu.into(),
 				),
 				_ => (vec![], 0),
@@ -380,10 +380,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 								// Reset selection to the first item
 								inv_list_state.select(Some(0));
 							}
-							/* else {
-								
-								//change_item_quantity(inv_list_state.selected())
-							} */
+							/*else {
+								show_quantity_selector(&mut terminal, inv_list_state.selected())
+							}*/
 						}
 					}
 				}
@@ -460,8 +459,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn draw_filtered_inventory<'a>(
-    rect: &mut tui::Frame<'a, CrosstermBackend<std::io::Stdout>>,
-    area: tui::layout::Rect,
+    rect: &mut Frame<'a>,
+    area: ratatui::layout::Rect,
     inv_list_state: &mut ListState,
     category: &str,
 ) {
@@ -474,8 +473,6 @@ fn draw_filtered_inventory<'a>(
     rect.render_stateful_widget(left, inv_chunks[0], inv_list_state);
     rect.render_widget(right, inv_chunks[1]);
 }
-
-
 
 fn remove_item_at_index(inv_list_state: &mut ListState) -> Result<(), Error> {
     if let Some(selected) = inv_list_state.selected() {
