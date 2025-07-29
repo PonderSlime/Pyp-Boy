@@ -74,12 +74,9 @@ pub fn get_current_coordinates_array() -> Result<[f64; 2], Box<dyn StdError>> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
 	
 	let coords: [f64; 2] = match get_current_coordinates_array() {
-        Ok(c) => c, // If the function returns Ok, extract the array
+        Ok(c) => c,
         Err(e) => {
             eprintln!("Error getting coordinates: {}", e);
-            // Handle the error (e.g., return a default value, exit the program)
-            // For now, we'll use a placeholder array in case of error.
-            // In a real application, you might panic! or exit().
             [0.0, 0.0]
         }
     };
@@ -153,7 +150,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	let mut data = [0; 3];
 	let samples_read = sensor.read_fifo(&mut data).unwrap();
 
-	// get the I2C device back
   	let dev = sensor.destroy(); */
 
     loop {
@@ -264,7 +260,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 					.highlight_style(Style::default().fg(Color::Green))
 					.divider(Span::raw("|"));
 
-				// shrink chunks to make room for submenu
 				let adjusted_chunks = Layout::default()
 					.direction(Direction::Vertical)
 					.margin(2)
@@ -308,7 +303,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 				rect.render_widget(copyright, adjusted_chunks[3]);
 			} else {
-				// fallback layout with no submenu
 				rect.render_widget(tabs, chunks[0]);
 				match active_menu_item {
 					MenuItem::Map => rect.render_widget(render_map(map_data.clone()), chunks[1]),
@@ -377,12 +371,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 							if selected == filtered_items.len() {
 								add_item_to_db().expect("can add new item");
-								// Reset selection to the first item
 								inv_list_state.select(Some(0));
+							} else {
+								let selected_item = &filtered_items[selected];
+								let new_item_quantity = show_quantity_selector(&mut terminal, selected_item.quantity)
+									.map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
+								update_selected_item_quantity(&mut inv_list_state, new_item_quantity as u32);
 							}
-							/*else {
-								show_quantity_selector(&mut terminal, inv_list_state.selected())
-							}*/
 						}
 					}
 				}
@@ -485,6 +480,41 @@ fn remove_item_at_index(inv_list_state: &mut ListState) -> Result<(), Error> {
             inv_list_state.select(Some(selected - 1));
         } else {
             inv_list_state.select(Some(0));
+        }
+    }
+    Ok(())
+}
+fn update_selected_item_quantity(
+    inv_list_state: &mut ListState,
+    new_quantity: u32,
+) -> Result<(), Error> {
+    if let Some(selected_idx) = inv_list_state.selected() {
+        let db_content = fs::read_to_string(DB_PATH)?;
+        let mut parsed: Vec<Item> = serde_json::from_str(&db_content)?;
+
+        if selected_idx < parsed.len() {
+            let item = &parsed[selected_idx];
+
+            let id = item.id;
+            let name = item.name.clone();
+            let details = item.details.clone();
+            let category = item.category.clone();
+            let created_at = item.created_at;
+
+            parsed.remove(selected_idx);
+			if new_quantity > 0 {
+				let updated_item = Item {
+					id,
+					name,
+					details,
+					quantity: new_quantity,
+					category,
+					created_at,
+				};
+
+				parsed.push(updated_item);
+			}
+			fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
         }
     }
     Ok(())

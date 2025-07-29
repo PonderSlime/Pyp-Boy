@@ -109,10 +109,12 @@ pub fn render_inv<'a>(mut inv_list_state: &ListState, category_filter: &'a str) 
 
     let inv_list = read_db().expect("can fetch item list");
 
-    let filtered_items: Vec<Item> = inv_list
+    let mut filtered_items: Vec<Item> = inv_list
         .into_iter()
         .filter(|item| item.category.eq_ignore_ascii_case(category_filter))
         .collect();
+
+    filtered_items.sort_by(|a, b| b.created_at.cmp(&a.created_at));
 
     let mut items: Vec<_> = filtered_items
         .iter()
@@ -174,6 +176,7 @@ pub fn render_inv<'a>(mut inv_list_state: &ListState, category_filter: &'a str) 
     (list, paragraph)
 }
 
+
 pub fn add_item_to_db() -> Result<Vec<Item>, Error> {
     let mut stdout = io::stdout();
     let backend = CrosstermBackend::new(stdout);
@@ -190,7 +193,7 @@ pub fn add_item_to_db() -> Result<Vec<Item>, Error> {
         .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
     let quantity = show_quantity_selector(&mut terminal, 0)
         .map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
-    let random_item = Item {
+    let new_item = Item {
         id: rng.gen_range(0, 9999999),
         name,
         details,
@@ -199,7 +202,7 @@ pub fn add_item_to_db() -> Result<Vec<Item>, Error> {
         created_at: Utc::now(),
     };
 
-    parsed.push(random_item);
+    parsed.push(new_item);
     fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
     Ok(parsed)
 }
