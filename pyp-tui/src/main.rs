@@ -170,8 +170,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 )
                 .split(size);
 			
-
-
             let copyright = Paragraph::new("COPYRIGHT 2075 ROBCO(R)")
                 .style(Style::default().fg(Color::LightCyan))
                 .alignment(Alignment::Center)
@@ -363,12 +361,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 				KeyCode::Enter => {
 					if active_menu_item == MenuItem::Inv {
 						if let Some(selected) = inv_list_state.selected() {
-							let filtered_items: Vec<Item> = read_db()
+							let mut filtered_items: Vec<Item> = read_db()
 								.expect("can fetch item list")
 								.into_iter()
 								.filter(|item| item.category.eq_ignore_ascii_case(active_inv_submenu.as_str()))
 								.collect();
-
+							filtered_items.sort_by_key(|item| std::cmp::Reverse(item.created_at));
 							if selected == filtered_items.len() {
 								add_item_to_db().expect("can add new item");
 								inv_list_state.select(Some(0));
@@ -376,7 +374,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 								let selected_item = &filtered_items[selected];
 								let new_item_quantity = show_quantity_selector(&mut terminal, selected_item.quantity)
 									.map_err(|e| Error::ReadDBError(io::Error::new(io::ErrorKind::Other, e.to_string())))?;
-								update_selected_item_quantity(&mut inv_list_state, new_item_quantity as u32);
+								update_selected_item_quantity((selected_item.id as usize).try_into().unwrap(), new_item_quantity as u32);
 							}
 						}
 					}
@@ -469,54 +467,39 @@ fn draw_filtered_inventory<'a>(
     rect.render_widget(right, inv_chunks[1]);
 }
 
-fn remove_item_at_index(inv_list_state: &mut ListState) -> Result<(), Error> {
-    if let Some(selected) = inv_list_state.selected() {
-        let db_content = fs::read_to_string(DB_PATH)?;
-        let mut parsed: Vec<Item> = serde_json::from_str(&db_content)?;
-        parsed.remove(selected);
-        fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
-        let amount_items = read_db().expect("can fetch item list").len();
-        if selected > 0 {
-            inv_list_state.select(Some(selected - 1));
-        } else {
-            inv_list_state.select(Some(0));
-        }
-    }
-    Ok(())
-}
 fn update_selected_item_quantity(
-    inv_list_state: &mut ListState,
+    id: usize,
     new_quantity: u32,
 ) -> Result<(), Error> {
-    if let Some(selected_idx) = inv_list_state.selected() {
-        let db_content = fs::read_to_string(DB_PATH)?;
-        let mut parsed: Vec<Item> = serde_json::from_str(&db_content)?;
+    let db_content = fs::read_to_string(DB_PATH)?;
+    let mut parsed: Vec<Item> = serde_json::from_str(&db_content)?;
 
-        if selected_idx < parsed.len() {
-            let item = &parsed[selected_idx];
+    if let Some(index) = parsed.iter().position(|item| item.id == id) {
+        let item = &parsed[index];
 
-            let id = item.id;
-            let name = item.name.clone();
-            let details = item.details.clone();
-            let category = item.category.clone();
-            let created_at = item.created_at;
+        let name = item.name.clone();
+        let details = item.details.clone();
+        let category = item.category.clone();
+        let created_at = item.created_at;
 
-            parsed.remove(selected_idx);
-			if new_quantity > 0 {
-				let updated_item = Item {
-					id,
-					name,
-					details,
-					quantity: new_quantity,
-					category,
-					created_at,
-				};
+        parsed.remove(index);
 
-				parsed.push(updated_item);
-			}
-			fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
+        if new_quantity > 0 {
+            let updated_item = Item {
+                id: id.try_into().unwrap(),
+                name,
+                details,
+                quantity: new_quantity,
+                category,
+                created_at,
+            };
+
+            parsed.push(updated_item);
         }
+
+        fs::write(DB_PATH, &serde_json::to_vec(&parsed)?)?;
     }
+
     Ok(())
 }
 

@@ -82,20 +82,20 @@ pub fn render_map<'a>(map_text: Option<String>) -> Paragraph<'a> {
 pub fn render_stat<'a>() -> Paragraph<'a> {
     Paragraph::new(vec![
         Line::from(vec![Span::raw("")]),
-        Line::from(vec![Span::raw("Welcome")]),
         Line::from(vec![Span::raw("")]),
-        Line::from(vec![Span::raw("to")]),
         Line::from(vec![Span::raw("")]),
-        Line::from(vec![Span::styled("Pyp-Boy", Style::default().fg(Color::LightBlue))]),
         Line::from(vec![Span::raw("")]),
-        Line::from(vec![Span::raw("Press 'i' to access inventory, 'a' to add random new items and 'd' to delete the currently selected item.")]),
+        Line::from(vec![Span::raw("")]),
+        Line::from(vec![Span::raw("")]),
+        Line::from(vec![Span::raw("")]),
+        Line::from(vec![Span::styled("Unable to fit inside of the case :/", Style::default().fg(Color::LightBlue))]),
     ])
     .alignment(Alignment::Center)
     .block(
         Block::default()
             .borders(Borders::ALL)
             .style(Style::default().fg(Color::White))
-            .title("Home")
+            .title("Radio")
             .border_type(BorderType::Plain),
     )
 }
