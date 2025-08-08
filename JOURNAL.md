@@ -92,3 +92,8 @@ I finally got all the parts for my project! I started by fixing all of my case d
 ![IMG_0214](https://github.com/user-attachments/assets/b7f94a36-2e0e-484d-b057-79cac3e2026d)
 
 **Time spent: 7h**
+
+# August 5-7th: Finished Assembly
+I finally finished assembly, after getting the last part for the screen. Also, I fixed the inventory system's quantity system, because it had a glitch with the differences between the json and the filtered lists. 
+
+**Time spent: 1h**
